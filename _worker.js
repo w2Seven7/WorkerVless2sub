@@ -83,6 +83,7 @@ async function sendMessage(type, ip, add_data = "") {
 	}
 }
 
+let MamaJustKilledAMan = ['telegram','twitter','miaoko'];
 async function getAddressesapi(api) {
 	if (!api || api.length === 0) {
 		return [];
@@ -144,6 +145,7 @@ async function getAddressesapi(api) {
 	
 	return newAddressesapi;
 }
+
 
 async function getAddressescsv(tls) {
 	if (!addressescsv || addressescsv.length === 0) {
@@ -207,13 +209,44 @@ async function getAddressescsv(tls) {
 }
 
 async function ADD(envadd) {
-	var addtext = envadd.replace(/[	 "'\r\n]+/g, ',').replace(/,+/g, ',');  // 将空格、双引号、单引号和换行符替换为逗号
+	var addtext = envadd.replace(/[	|"'\r\n]+/g, ',').replace(/,+/g, ',');  // 将空格、双引号、单引号和换行符替换为逗号
 	//console.log(addtext);
 	if (addtext.charAt(0) == ',') addtext = addtext.slice(1);
 	if (addtext.charAt(addtext.length -1) == ',') addtext = addtext.slice(0, addtext.length - 1);
 	const add = addtext.split(',');
 	//console.log(add);
 	return add ;
+}
+
+async function nginx() {
+	const text = `
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Welcome to nginx!</title>
+	<style>
+		body {
+			width: 35em;
+			margin: 0 auto;
+			font-family: Tahoma, Verdana, Arial, sans-serif;
+		}
+	</style>
+	</head>
+	<body>
+	<h1>Welcome to nginx!</h1>
+	<p>If you see this page, the nginx web server is successfully installed and
+	working. Further configuration is required.</p>
+	
+	<p>For online documentation and support please refer to
+	<a href="http://nginx.org/">nginx.org</a>.<br/>
+	Commercial support is available at
+	<a href="http://nginx.com/">nginx.com</a>.</p>
+	
+	<p><em>Thank you for using nginx.</em></p>
+	</body>
+	</html>
+	`
+	return text ;
 }
 
 let protocol;
@@ -236,6 +269,7 @@ export default {
 		let path = "";
 		let sni = "";
 		let UD = Math.floor(((timestamp - Date.now())/timestamp * 99 * 1099511627776 * 1024)/2);
+		if (env.UA) MamaJustKilledAMan = MamaJustKilledAMan.concat(await ADD(env.UA));
 		total = total * 1099511627776 * 1024;
 		let expire= Math.floor(timestamp / 1000) ;
 
@@ -301,7 +335,7 @@ export default {
 					// 错误处理
 				}	
 			}
-		await sendMessage("#获取订阅", request.headers.get('CF-Connecting-IP'), `UA: ${userAgent}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
+		await sendMessage("#获取订阅", request.headers.get('CF-Connecting-IP'), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 		} else {
 			host = url.searchParams.get('host');
 			uuid = url.searchParams.get('uuid');
@@ -311,25 +345,11 @@ export default {
 			RproxyIP = url.searchParams.get('proxyip') || RproxyIP;
 			
 			if (!url.pathname.includes("/sub")) {
-				const responseText = `
-			路径必须包含 "/sub"
-			The path must contain "/sub"
-			مسیر باید شامل "/sub" باشد
-			
-			${url.origin}/sub?host=[your host]&uuid=[your uuid]&path=[your path]
-			
-			
-			
-			
-			
-			
-				
-				https://github.com/cmliu/WorkerVless2sub
-				`;
-			
-				return new Response(responseText, {
-				status: 400,
-				headers: { 'content-type': 'text/plain; charset=utf-8' },
+				//首页改成一个nginx伪装页
+				return new Response(await nginx(), {
+					headers: {
+						'Content-Type': 'text/html; charset=UTF-8',
+					},
 				});
 			}
 			
@@ -367,8 +387,13 @@ export default {
 		noTLS = host.toLowerCase().includes('notls') || host.toLowerCase().includes('worker') || host.toLowerCase().includes('trycloudflare') || noTLS;
 		if(env.NOTLS == 'true')noTLS = true;
 		
-		if (userAgent.includes('telegram') || userAgent.includes('twitter') || userAgent.includes('miaoko')) {
-			return new Response('Hello World!');
+		if (!userAgent.includes('subconverter') && MamaJustKilledAMan.some(PutAGunAgainstHisHeadPulledMyTriggerNowHesDead => userAgent.includes(PutAGunAgainstHisHeadPulledMyTriggerNowHesDead)) && MamaJustKilledAMan.length > 0) {
+			//首页改成一个nginx伪装页
+			return new Response(await nginx(), {
+				headers: {
+					'Content-Type': 'text/html; charset=UTF-8',
+				},
+			});
 		} else if ((userAgent.includes('clash') || (format === 'clash' && !userAgent.includes('subconverter'))) && !userAgent.includes('nekobox')) {
 			const subconverterUrl = `https://${subconverter}/sub?target=clash&url=${encodeURIComponent(request.url)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
 
